@@ -11,8 +11,21 @@ const app = express()
 const PORT = process.env.PORT || 3001
 
 app.use(helmet())
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'https://wolf-squadron.onrender.com',
+].filter(Boolean)
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true)
+    } else {
+      callback(null, true)
+    }
+  },
   methods: ['GET', 'POST'],
 }))
 app.use(express.json())
