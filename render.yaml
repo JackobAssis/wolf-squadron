@@ -3,18 +3,14 @@ services:
     name: wolf-squadron-api
     env: node
     region: oregon
-    rootDir: backend
-    buildCommand: npm install
-    startCommand: npm start
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && node src/index.js
     healthCheckPath: /api/v1/health
     envVars:
       - key: NODE_ENV
         value: production
       - key: FRONTEND_URL
-        fromService:
-          type: static
-          name: wolf-squadron
-          property: host
+        value: https://wolf-squadron.onrender.com
       - key: PORT
         value: 3001
 
@@ -22,9 +18,8 @@ services:
     name: wolf-squadron
     env: static
     region: oregon
-    rootDir: frontend
-    buildCommand: npm install && npm run build
-    staticPublishPath: dist
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/dist
     headers:
       - path: /*
         name: Cache-Control
@@ -35,7 +30,4 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_URL
-        fromService:
-          type: web
-          name: wolf-squadron-api
-          property: host
+        value: https://wolf-squadron-api.onrender.com
