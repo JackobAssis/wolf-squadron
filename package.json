@@ -2,10 +2,17 @@
   "name": "wolf-squadron",
   "private": true,
   "version": "1.0.0",
+  "type": "module",
   "scripts": {
     "start": "cd backend && node src/index.js",
     "build": "cd frontend && npm install && npm run build",
     "dev:frontend": "cd frontend && npm run dev",
     "dev:backend": "cd backend && npm run dev"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "cors": "^2.8.5",
+    "helmet": "^8.2.0",
+    "express-rate-limit": "^8.5.2"
   }
 }
