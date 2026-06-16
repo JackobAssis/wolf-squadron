@@ -1,3 +1,5 @@
+import { api } from './ApiClient.js'
+
 const STORAGE_KEY = 'wolf_squadron_scores'
 
 export class ScoreSystem {
@@ -49,7 +51,7 @@ export class ScoreSystem {
 
   saveScore(playerName, waves, shipType, bossesDefeated, upgradesSelected) {
     const entry = {
-      id: crypto.randomUUID(),
+      id: crypto.randomUUID?.() || Date.now().toString(36),
       playerName,
       score: this.score,
       waves,
@@ -60,13 +62,31 @@ export class ScoreSystem {
       createdAt: new Date().toISOString(),
     }
 
-    const scores = this.getScores()
-    scores.push(entry)
-    scores.sort((a, b) => b.score - a.score)
+    this._saveLocal(entry)
+    this._saveApi(entry)
+    return entry
+  }
+
+  _saveLocal(entry) {
     try {
+      const scores = this.getScores()
+      scores.push(entry)
+      scores.sort((a, b) => b.score - a.score)
       localStorage.setItem(STORAGE_KEY, JSON.stringify(scores.slice(0, 100)))
     } catch { }
-    return entry
+  }
+
+  async _saveApi(entry) {
+    try {
+      await api.submitScore({
+        playerName: entry.playerName,
+        score: entry.score,
+        waves: entry.waves,
+        shipType: entry.shipType,
+        bossesDefeated: entry.bossesDefeated,
+        upgradesSelected: entry.upgradesSelected,
+      })
+    } catch { }
   }
 
   getScores() {
@@ -79,6 +99,7 @@ export class ScoreSystem {
 
   getRank(newScore) {
     const scores = this.getScores()
-    return scores.findIndex(s => s.score < newScore) + 1 || scores.length + 1
+    const pos = scores.findIndex(s => s.score < newScore)
+    return pos === -1 ? scores.length + 1 : pos + 1
   }
 }

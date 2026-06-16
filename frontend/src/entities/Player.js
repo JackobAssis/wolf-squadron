@@ -23,6 +23,8 @@ export class Player {
     this.damageMultiplier = 1
     this.fireRateMultiplier = 1
     this.extraProjectiles = 0
+    this.shieldHits = 0
+    this._rechargeShield = false
   }
 
   reset(x, y) {
@@ -34,6 +36,15 @@ export class Player {
     this.damageMultiplier = 1
     this.fireRateMultiplier = 1
     this.extraProjectiles = 0
+  }
+
+  setShield(hits) {
+    this.shieldHits = hits
+    this._rechargeShield = hits > 0
+  }
+
+  rechargeShield() {
+    if (this._rechargeShield) this.shieldHits = 1
   }
 
   update(dt, input, gameWidth, gameHeight) {
@@ -58,6 +69,11 @@ export class Player {
 
   takeDamage(amount) {
     if (this.invulnerable > 0 || !this.alive) return false
+    if (this.shieldHits > 0) {
+      this.shieldHits--
+      this.invulnerable = this.invulnDuration * 0.5
+      return false
+    }
     this.hp -= amount
     this.invulnerable = this.invulnDuration
     if (this.hp <= 0) {
@@ -96,6 +112,14 @@ export class Player {
     ctx.lineTo(p.x + 14, p.y + 10)
     ctx.closePath()
     ctx.fill()
+
+    if (this.shieldHits > 0) {
+      ctx.strokeStyle = 'rgba(0, 255, 65, 0.4)'
+      ctx.lineWidth = 2
+      ctx.beginPath()
+      ctx.arc(p.x, p.y - 2, 20, 0, Math.PI * 2)
+      ctx.stroke()
+    }
 
     ctx.fillStyle = '#0d2b1d'
     ctx.beginPath()

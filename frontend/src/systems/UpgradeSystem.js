@@ -137,6 +137,7 @@ export class UpgradeSystem {
     let fireRateMult = 1
     let extraProj = 0
     let extraHp = 0
+    let hasShield = false
 
     for (const id of this.selected) {
       const upg = this.allUpgrades.find(u => u.id === id)
@@ -147,7 +148,7 @@ export class UpgradeSystem {
         case 'fireRate': fireRateMult *= upg.effect.value; break
         case 'projectile': extraProj += upg.effect.value; break
         case 'hp': extraHp += upg.effect.value; break
-        case 'shield': break
+        case 'shield': hasShield = true; break
       }
     }
 
@@ -157,6 +158,7 @@ export class UpgradeSystem {
     player.extraProjectiles = extraProj
     player.maxHp = (player.shipType === 'lightning' ? 80 : player.shipType === 'phantom' ? 100 : 130) + extraHp
     if (player.hp > player.maxHp) player.hp = player.maxHp
+    player.setShield(hasShield ? 1 : 0)
   }
 
   get hasShield() {

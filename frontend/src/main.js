@@ -3,6 +3,7 @@ import { InputSystem } from './systems/InputSystem.js'
 import { ShipSelectScene } from './scenes/ShipSelectScene.js'
 import { RankingScene } from './scenes/RankingScene.js'
 import { CreditsScene } from './scenes/CreditsScene.js'
+import { NameInputScene } from './scenes/NameInputScene.js'
 import { Player } from './entities/Player.js'
 import { BulletPool } from './entities/Bullet.js'
 import { spawnEnemy } from './entities/Enemy.js'
@@ -158,14 +159,14 @@ class GameplayScene extends Scene {
     if (this.gameOver) {
       this.gameOverTimer -= dt
       if (this.gameOverTimer <= 0) {
-        this.scoreSystem.saveScore(
-          'ACE_WOLF',
-          this.waveSystem.consecutiveWaves,
-          this.player.shipType,
-          this.bossDefeated,
-          this.upgradeSystem.selected
-        )
-        this.manager.switchTo('ranking')
+        this.manager.gameState._pendingScore = {
+          scoreSystem: this.scoreSystem,
+          waves: this.waveSystem.consecutiveWaves,
+          shipType: this.player.shipType,
+          bossesDefeated: this.bossDefeated,
+          upgradesSelected: [...this.upgradeSystem.selected],
+        }
+        this.manager.switchTo('nameInput')
       }
       return
     }
@@ -313,6 +314,7 @@ class GameplayScene extends Scene {
       this.waveTimer -= dt
       if (this.waveTimer <= 0 && !this.waveSystem.isComplete) {
         this.waveSystem.startNextWave()
+        this.player.rechargeShield()
       }
     }
 
@@ -461,6 +463,7 @@ sceneManager
   .add('menu', new MenuScene())
   .add('shipSelect', new ShipSelectScene())
   .add('gameplay', new GameplayScene())
+  .add('nameInput', new NameInputScene())
   .add('ranking', new RankingScene())
   .add('credits', new CreditsScene())
 
