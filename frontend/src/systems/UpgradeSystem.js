@@ -110,9 +110,15 @@ export class UpgradeSystem {
   }
 
   generateChoices(tier) {
-    const available = this.getAvailable(tier)
-    const shuffled = [...available].sort(() => Math.random() - 0.5)
-    this.choices = shuffled.slice(0, Math.min(4, shuffled.length))
+    for (let t = tier; t >= 1; t--) {
+      const available = this.getAvailable(t)
+      if (available.length > 0) {
+        const shuffled = [...available].sort(() => Math.random() - 0.5)
+        this.choices = shuffled.slice(0, Math.min(4, shuffled.length))
+        return this.choices
+      }
+    }
+    this.choices = []
     return this.choices
   }
 

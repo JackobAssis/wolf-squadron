@@ -21,6 +21,7 @@ export class WaveSystem {
     this.miniBossSpawned = false
     this.miniBossActive = false
 
+    this.totalKilled = 0
     this.difficultyMultiplier = 1
     this.consecutiveWaves = 0
   }
@@ -59,6 +60,7 @@ export class WaveSystem {
     this.bossSpawned = false
     this.miniBossSpawned = false
     this.miniBossActive = false
+    this.totalKilled = 0
     this.difficultyMultiplier = 1
     this.consecutiveWaves = 0
   }
@@ -136,8 +138,12 @@ export class WaveSystem {
     return spawns
   }
 
+  registerKill() {
+    this.totalKilled++
+  }
+
   get isWaveCleared() {
-    return this.totalSpawned >= this.totalInWave
+    return this.totalInWave > 0 && this.totalSpawned >= this.totalInWave && this.totalKilled >= this.totalInWave
   }
 
   get isUpgradeWave() {

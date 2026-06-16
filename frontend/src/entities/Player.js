@@ -45,10 +45,11 @@ export class Player {
 
     const dx = input.horizontal
     const dy = input.vertical
-    if (dx !== 0 || dy !== 0) {
-      const len = Math.sqrt(dx * dx + dy * dy)
-      this.x += (dx / len) * this.speed * dt
-      this.y += (dy / len) * this.speed * dt
+    const len = Math.sqrt(dx * dx + dy * dy)
+    if (len > 0.01) {
+      const speedFactor = Math.min(len, 1)
+      this.x += (dx / len) * speedFactor * this.speed * dt
+      this.y += (dy / len) * speedFactor * this.speed * dt
     }
 
     this.x = Math.max(this.radius, Math.min(gameWidth - this.radius, this.x))

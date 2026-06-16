@@ -16,12 +16,12 @@ import { ScoreSystem } from './systems/ScoreSystem.js'
 const canvas = document.getElementById('gameCanvas')
 const ctx = canvas.getContext('2d')
 
-const input = new InputSystem(canvas)
-const sceneManager = new SceneManager()
-sceneManager.setInput(input)
-
 const GAME_WIDTH = 480
 const GAME_HEIGHT = 720
+
+const input = new InputSystem(canvas, GAME_WIDTH, GAME_HEIGHT)
+const sceneManager = new SceneManager()
+sceneManager.setInput(input)
 sceneManager.gameWidth = GAME_WIDTH
 sceneManager.gameHeight = GAME_HEIGHT
 
@@ -143,6 +143,9 @@ class GameplayScene extends Scene {
     this.gameOver = false
     this.gameOverTimer = 0
 
+    this.bossDelayedAttacks = []
+    this.waveTimer = 0
+
     this.upgradeSystem.applyToPlayer(this.player)
     this.waveSystem.startNextWave()
   }
@@ -222,9 +225,20 @@ class GameplayScene extends Scene {
       this.boss.update(dt, this.player, GAME_WIDTH, GAME_HEIGHT)
       const attacks = this.boss.getAttacks(this.player)
       for (const a of attacks) {
-        setTimeout(() => {
+        if (a.delay) {
+          this.bossDelayedAttacks.push({ ...a, timer: a.delay })
+        } else {
           this.enemyBullets.fire(a.x, a.y, a.vx, a.vy, 'boss', { speed: a.speed, damage: a.damage, radius: a.radius })
-        }, (a.delay || 0) * 1000)
+        }
+      }
+    }
+
+    for (let i = this.bossDelayedAttacks.length - 1; i >= 0; i--) {
+      this.bossDelayedAttacks[i].timer -= dt
+      if (this.bossDelayedAttacks[i].timer <= 0) {
+        const a = this.bossDelayedAttacks[i]
+        this.enemyBullets.fire(a.x, a.y, a.vx, a.vy, 'boss', { speed: a.speed, damage: a.damage, radius: a.radius })
+        this.bossDelayedAttacks.splice(i, 1)
       }
     }
 
@@ -237,6 +251,7 @@ class GameplayScene extends Scene {
       if (enemy.takeDamage(bullet.damage)) {
         this.scoreSystem.addKill(enemy.score)
         this.particles.emitExplosion(enemy.x, enemy.y, '#ff3344')
+        this.waveSystem.registerKill()
       }
     }
 
@@ -249,6 +264,7 @@ class GameplayScene extends Scene {
           this.scoreSystem.addKill(this.boss.score)
           this.bossDefeated++
           this.particles.emitExplosion(this.boss.x, this.boss.y, '#ff8800')
+          this.waveSystem.registerKill()
         }
       }
     }
@@ -288,8 +304,15 @@ class GameplayScene extends Scene {
             this.upgradeMode = true
           }
           this.waveSystem.advanceWave()
-          setTimeout(() => { if (!this.waveSystem.isComplete) this.waveSystem.startNextWave() }, 300)
+          this.waveTimer = 0.3
         }
+      }
+    }
+
+    if (this.waveTimer > 0) {
+      this.waveTimer -= dt
+      if (this.waveTimer <= 0 && !this.waveSystem.isComplete) {
+        this.waveSystem.startNextWave()
       }
     }
 
@@ -300,6 +323,10 @@ class GameplayScene extends Scene {
   }
 
   _handleUpgradeInput(input) {
+    if (this.upgradeChoices.length === 0) {
+      this.upgradeMode = false
+      return
+    }
     if (input.justPressed('ArrowDown') || input.justPressed('KeyS')) {
       this.upgradeSelectedIndex = (this.upgradeSelectedIndex + 1) % this.upgradeChoices.length
     }
@@ -379,10 +406,17 @@ class GameplayScene extends Scene {
     }
 
     if (input.touch.active) {
+      const bx = input.touch.startX
+      const by = input.touch.startY
+      const dx = input.touch.currentX - bx
+      const dy = input.touch.currentY - by
+      const dist = Math.sqrt(dx * dx + dy * dy)
+      const clamp = Math.min(dist, 60)
+      const angle = Math.atan2(dy, dx)
       ctx.strokeStyle = '#0d2b1d'
       ctx.lineWidth = 2
-      ctx.beginPath(); ctx.arc(80, gh - 80, 40, 0, Math.PI * 2); ctx.stroke()
-      ctx.beginPath(); ctx.arc(80 + input.touch.deltaX, gh - 80 + input.touch.deltaY, 12, 0, Math.PI * 2); ctx.stroke()
+      ctx.beginPath(); ctx.arc(bx, by, 40, 0, Math.PI * 2); ctx.stroke()
+      ctx.beginPath(); ctx.arc(bx + Math.cos(angle) * clamp, by + Math.sin(angle) * clamp, 12, 0, Math.PI * 2); ctx.stroke()
     }
   }
 
